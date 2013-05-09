@@ -55,6 +55,9 @@ typedef struct
 	miScalar aoMinDistance;
 	miScalar aoMaxDistance;
 	
+	//mila string options
+	miBoolean milaClamp;
+	
 	//int fb_virtual;
 	miBoolean	overrideFbMemManagement;
 	miInteger	fbMemManagement;
@@ -83,9 +86,13 @@ typedef struct
 	miBoolean emission_pass;
 	miBoolean gpuAO_pass;
 	miBoolean UserPass1_pass;
+	miTag 	  UserPass1_str;
 	miBoolean UserPass2_pass;
+	miTag 	  UserPass2_str;
 	miBoolean UserPass3_pass;
+	miTag 	  UserPass3_str;
 	miBoolean UserPass4_pass;
+	miTag 	  UserPass4_str;
 	miBoolean modifyCamera;
     miInteger mode; // 0=off, 1=toein, 2=offaxis, 3=offset
     miScalar eyeDist;	
@@ -132,7 +139,9 @@ int get_render_file_func(miState* state, char *dir, char *name, char *prefix, in
 	get_frame_number(state, frame_num, pad);
 	strcat(dir, "/");				//render_dir + "/"
 	strcat(dir, name);				//add name
+	strcat(dir, "-");				//add minus
 	strcat(dir, prefix);			//add prefix
+	strcat(dir, "_");				//add underline
 	strcat(dir, frame_num);			//add frame number
 	strcat(dir, ".");				//add dot
 	strcat(dir, ext);				//add format
@@ -412,6 +421,15 @@ DLLEXPORT miBoolean mla_Buffers_pass(miTag *result, miState *state, mla_Buffers_
 		options->set("ambient occlusion framebuffer", "gpuAO");		
 		options->release();		
 	} 
+	
+	if( *mi_eval_boolean(&paras->milaClamp) )
+	{		
+		mi::shader::Interface *iface = mi_get_shader_interface();
+		mi::shader::Options *options = iface->getOptions(state->options->string_options);
+		iface->release();
+		options->set("mila clamp output", true);	
+		options->release();		
+	} 
 
 /////////////////////////////// Call Output Shaders
 //	mi_api_incremental(1);
@@ -474,10 +492,10 @@ DLLEXPORT miBoolean mla_Buffers_pass(miTag *result, miState *state, mla_Buffers_
 		strcpy(render_dir_cur_pass, render_dir);
 
 			if(*mi_eval_integer(&paras->mr_color_format) != 2)
-				get_render_file_func(state, render_dir_cur_pass, name, "-color_", frame_padding, c_format);
+				get_render_file_func(state, render_dir_cur_pass, name, "color", frame_padding, c_format);
 			else 
 			{
-				get_render_file_func(state, render_dir_cur_pass, name, "-single_", frame_padding, get_ext(out_format));
+				get_render_file_func(state, render_dir_cur_pass, name, "single", frame_padding, get_ext(out_format));
 			}
 			if (*mi_eval_integer(&paras->mr_color_format) == 2 || *mi_eval_integer(&paras->mr_color_format) == 3) {
 				fbc->set("color", "compression", exr_comp);	
@@ -518,10 +536,10 @@ DLLEXPORT miBoolean mla_Buffers_pass(miTag *result, miState *state, mla_Buffers_
 		strcpy(render_dir_cur_pass, render_dir);
 
 			if(*mi_eval_integer(&paras->mr_z_format) != 2)
-				get_render_file_func(state, render_dir_cur_pass, name, "-zdepth_", frame_padding, z_format);
+				get_render_file_func(state, render_dir_cur_pass, name, "zdepth", frame_padding, z_format);
 			else 
 			{
-				get_render_file_func(state, render_dir_cur_pass, name, "-single_", frame_padding, get_ext(out_format));
+				get_render_file_func(state, render_dir_cur_pass, name, "single", frame_padding, get_ext(out_format));
 				fbc->set("Z", "compression", exr_comp);
 			}
 			fbc->set("Z", "filename", render_dir_cur_pass);
@@ -559,10 +577,10 @@ DLLEXPORT miBoolean mla_Buffers_pass(miTag *result, miState *state, mla_Buffers_
 		strcpy(render_dir_cur_pass, render_dir);
 
 			if(*mi_eval_integer(&paras->mr_normal_format) != 2)
-				get_render_file_func(state, render_dir_cur_pass, name, "-Normal_", frame_padding, n_format);
+				get_render_file_func(state, render_dir_cur_pass, name, "Normal", frame_padding, n_format);
 			else
 			{
-				get_render_file_func(state, render_dir_cur_pass, name, "-single_", frame_padding, get_ext(out_format));
+				get_render_file_func(state, render_dir_cur_pass, name, "single", frame_padding, get_ext(out_format));
 				fbc->set("Normal", "compression", exr_comp);
 			}
 			fbc->set("Normal", "filename", render_dir_cur_pass);
@@ -600,10 +618,10 @@ DLLEXPORT miBoolean mla_Buffers_pass(miTag *result, miState *state, mla_Buffers_
 		strcpy(render_dir_cur_pass, render_dir);
 
 			if(*mi_eval_integer(&paras->mr_motion_format) != 2)
-				get_render_file_func(state, render_dir_cur_pass, name, "-Motion_", frame_padding, m_format);
+				get_render_file_func(state, render_dir_cur_pass, name, "Motion", frame_padding, m_format);
 			else
 			{
-				get_render_file_func(state, render_dir_cur_pass, name, "-single_", frame_padding, get_ext(out_format));
+				get_render_file_func(state, render_dir_cur_pass, name, "single", frame_padding, get_ext(out_format));
 				fbc->set("Motion", "compression", exr_comp);
 			}
 			fbc->set("Motion", "filename", render_dir_cur_pass);
@@ -640,10 +658,10 @@ DLLEXPORT miBoolean mla_Buffers_pass(miTag *result, miState *state, mla_Buffers_
 		char render_dir_cur_pass[MAX_PATH_L];
 		strcpy(render_dir_cur_pass, render_dir);
 			if(*mi_eval_integer(&paras->mr_label_format) != 2)
-				get_render_file_func(state, render_dir_cur_pass, name, "-Label_", frame_padding, label_format);
+				get_render_file_func(state, render_dir_cur_pass, name, "Label", frame_padding, label_format);
 			else
 			{
-				get_render_file_func(state, render_dir_cur_pass, name, "-single_", frame_padding, get_ext(out_format));
+				get_render_file_func(state, render_dir_cur_pass, name, "single", frame_padding, get_ext(out_format));
 				fbc->set("Label", "compression", exr_comp);
 			}
 			fbc->set("Label", "filename", render_dir_cur_pass);
@@ -658,9 +676,9 @@ DLLEXPORT miBoolean mla_Buffers_pass(miTag *result, miState *state, mla_Buffers_
 		strcpy(render_dir_cur_pass, render_dir);
 
 			if(out_format != 2) {
-				get_render_file_func(state, render_dir_cur_pass, name, "-direct_diffuse_", frame_padding, get_ext(out_format));
+				get_render_file_func(state, render_dir_cur_pass, name, "direct_diffuse", frame_padding, get_ext(out_format));
 			} else {
-				get_render_file_func(state, render_dir_cur_pass, name, "-single_", frame_padding, get_ext(out_format));
+				get_render_file_func(state, render_dir_cur_pass, name, "single", frame_padding, get_ext(out_format));
 				}
 			if (out_format == 2 || out_format == 3) {
 				fbc->set("direct_diffuse", "compression", exr_comp);	
@@ -682,9 +700,9 @@ DLLEXPORT miBoolean mla_Buffers_pass(miTag *result, miState *state, mla_Buffers_
 		strcpy(render_dir_cur_pass, render_dir);
 
 			if(out_format != 2) {
-				get_render_file_func(state, render_dir_cur_pass, name, "-indirect_diffuse_", frame_padding, get_ext(out_format));
+				get_render_file_func(state, render_dir_cur_pass, name, "indirect_diffuse", frame_padding, get_ext(out_format));
 			} else {
-				get_render_file_func(state, render_dir_cur_pass, name, "-single_", frame_padding, get_ext(out_format));
+				get_render_file_func(state, render_dir_cur_pass, name, "single", frame_padding, get_ext(out_format));
 				}
 			if (out_format == 2 || out_format == 3) {
 				fbc->set("indirect_diffuse", "compression", exr_comp);	
@@ -706,9 +724,9 @@ DLLEXPORT miBoolean mla_Buffers_pass(miTag *result, miState *state, mla_Buffers_
 		strcpy(render_dir_cur_pass, render_dir);
 		
 			if(out_format != 2) {
-				get_render_file_func(state, render_dir_cur_pass, name, "-direct_glossy_", frame_padding, get_ext(out_format));
+				get_render_file_func(state, render_dir_cur_pass, name, "direct_glossy", frame_padding, get_ext(out_format));
 			} else {
-				get_render_file_func(state, render_dir_cur_pass, name, "-single_", frame_padding, get_ext(out_format));
+				get_render_file_func(state, render_dir_cur_pass, name, "single", frame_padding, get_ext(out_format));
 				}
 			if (out_format == 2 || out_format == 3) {
 				fbc->set("direct_glossy", "compression", exr_comp);	
@@ -730,9 +748,9 @@ DLLEXPORT miBoolean mla_Buffers_pass(miTag *result, miState *state, mla_Buffers_
 		strcpy(render_dir_cur_pass, render_dir);
 
 			if(out_format != 2) {
-				get_render_file_func(state, render_dir_cur_pass, name, "-indirect_glossy_", frame_padding, get_ext(out_format));
+				get_render_file_func(state, render_dir_cur_pass, name, "indirect_glossy", frame_padding, get_ext(out_format));
 			} else {
-				get_render_file_func(state, render_dir_cur_pass, name, "-single_", frame_padding, get_ext(out_format));
+				get_render_file_func(state, render_dir_cur_pass, name, "single", frame_padding, get_ext(out_format));
 				}
 			if (out_format == 2 || out_format == 3) {
 				fbc->set("indirect_glossy", "compression", exr_comp);	
@@ -754,9 +772,9 @@ DLLEXPORT miBoolean mla_Buffers_pass(miTag *result, miState *state, mla_Buffers_
 		strcpy(render_dir_cur_pass, render_dir);
 
 			if(out_format != 2) {
-				get_render_file_func(state, render_dir_cur_pass, name, "-direct_specular_", frame_padding, get_ext(out_format));
+				get_render_file_func(state, render_dir_cur_pass, name, "direct_specular", frame_padding, get_ext(out_format));
 			} else {
-				get_render_file_func(state, render_dir_cur_pass, name, "-single_", frame_padding, get_ext(out_format));
+				get_render_file_func(state, render_dir_cur_pass, name, "single", frame_padding, get_ext(out_format));
 				}
 			if (out_format == 2 || out_format == 3) {
 				fbc->set("direct_specular", "compression", exr_comp);	
@@ -778,9 +796,9 @@ DLLEXPORT miBoolean mla_Buffers_pass(miTag *result, miState *state, mla_Buffers_
 		strcpy(render_dir_cur_pass, render_dir);
 
 			if(out_format != 2) {
-				get_render_file_func(state, render_dir_cur_pass, name, "-indirect_specular_", frame_padding, get_ext(out_format));
+				get_render_file_func(state, render_dir_cur_pass, name, "indirect_specular", frame_padding, get_ext(out_format));
 			} else {
-				get_render_file_func(state, render_dir_cur_pass, name, "-single_", frame_padding, get_ext(out_format));
+				get_render_file_func(state, render_dir_cur_pass, name, "single", frame_padding, get_ext(out_format));
 				}
 			if (out_format == 2 || out_format == 3) {
 				fbc->set("indirect_specular", "compression", exr_comp);	
@@ -802,9 +820,9 @@ DLLEXPORT miBoolean mla_Buffers_pass(miTag *result, miState *state, mla_Buffers_
 		strcpy(render_dir_cur_pass, render_dir);
 
 			if(out_format != 2) {
-				get_render_file_func(state, render_dir_cur_pass, name, "-diffuse_transmission_", frame_padding, get_ext(out_format));
+				get_render_file_func(state, render_dir_cur_pass, name, "diffuse_transmission", frame_padding, get_ext(out_format));
 			} else {
-				get_render_file_func(state, render_dir_cur_pass, name, "-single_", frame_padding, get_ext(out_format));
+				get_render_file_func(state, render_dir_cur_pass, name, "single", frame_padding, get_ext(out_format));
 				}
 			if (out_format == 2 || out_format == 3) {
 				fbc->set("diffuse_transmission", "compression", exr_comp);	
@@ -826,9 +844,9 @@ DLLEXPORT miBoolean mla_Buffers_pass(miTag *result, miState *state, mla_Buffers_
 		strcpy(render_dir_cur_pass, render_dir);
 
 			if(out_format != 2) {
-				get_render_file_func(state, render_dir_cur_pass, name, "-glossy_transmission_", frame_padding, get_ext(out_format));
+				get_render_file_func(state, render_dir_cur_pass, name, "glossy_transmission", frame_padding, get_ext(out_format));
 			} else {
-				get_render_file_func(state, render_dir_cur_pass, name, "-single_", frame_padding, get_ext(out_format));
+				get_render_file_func(state, render_dir_cur_pass, name, "single", frame_padding, get_ext(out_format));
 				}
 			if (out_format == 2 || out_format == 3) {
 				fbc->set("glossy_transmission", "compression", exr_comp);	
@@ -850,9 +868,9 @@ DLLEXPORT miBoolean mla_Buffers_pass(miTag *result, miState *state, mla_Buffers_
 		strcpy(render_dir_cur_pass, render_dir);
 
 			if(out_format != 2) {
-				get_render_file_func(state, render_dir_cur_pass, name, "-specular_transmission_", frame_padding, get_ext(out_format));
+				get_render_file_func(state, render_dir_cur_pass, name, "specular_transmission", frame_padding, get_ext(out_format));
 			} else { 
-				get_render_file_func(state, render_dir_cur_pass, name, "-single_", frame_padding, get_ext(out_format));
+				get_render_file_func(state, render_dir_cur_pass, name, "single", frame_padding, get_ext(out_format));
 				}
 			if (out_format == 2 || out_format == 3) {
 				fbc->set("specular_transmission", "compression", exr_comp);	
@@ -874,9 +892,9 @@ DLLEXPORT miBoolean mla_Buffers_pass(miTag *result, miState *state, mla_Buffers_
 		strcpy(render_dir_cur_pass, render_dir);
 
 			if(out_format != 2) {
-				get_render_file_func(state, render_dir_cur_pass, name, "-front_scatter_", frame_padding, get_ext(out_format));
+				get_render_file_func(state, render_dir_cur_pass, name, "front_scatter", frame_padding, get_ext(out_format));
 			 } else {
-				get_render_file_func(state, render_dir_cur_pass, name, "-single_", frame_padding, get_ext(out_format));
+				get_render_file_func(state, render_dir_cur_pass, name, "single", frame_padding, get_ext(out_format));
 				}
 			if (out_format == 2 || out_format == 3) {
 				fbc->set("front_scatter", "compression", exr_comp);	
@@ -898,9 +916,9 @@ DLLEXPORT miBoolean mla_Buffers_pass(miTag *result, miState *state, mla_Buffers_
 		strcpy(render_dir_cur_pass, render_dir);
 		
 			if(out_format != 2) {
-				get_render_file_func(state, render_dir_cur_pass, name, "-back_scatter_", frame_padding, get_ext(out_format));
+				get_render_file_func(state, render_dir_cur_pass, name, "back_scatter", frame_padding, get_ext(out_format));
 			} else {
-				get_render_file_func(state, render_dir_cur_pass, name, "-single_", frame_padding, get_ext(out_format));
+				get_render_file_func(state, render_dir_cur_pass, name, "single", frame_padding, get_ext(out_format));
 				}
 			if (out_format == 2 || out_format == 3) {
 				fbc->set("back_scatter", "compression", exr_comp);	
@@ -922,9 +940,9 @@ DLLEXPORT miBoolean mla_Buffers_pass(miTag *result, miState *state, mla_Buffers_
 		strcpy(render_dir_cur_pass, render_dir);
 
 			if(out_format != 2) {
-				get_render_file_func(state, render_dir_cur_pass, name, "-emission_", frame_padding, get_ext(out_format));
+				get_render_file_func(state, render_dir_cur_pass, name, "emission", frame_padding, get_ext(out_format));
 			} else {
-				get_render_file_func(state, render_dir_cur_pass, name, "-single_", frame_padding, get_ext(out_format));
+				get_render_file_func(state, render_dir_cur_pass, name, "single", frame_padding, get_ext(out_format));
 				}
 			if (out_format == 2 || out_format == 3) {
 				fbc->set("emission", "compression", exr_comp);	
@@ -946,9 +964,9 @@ DLLEXPORT miBoolean mla_Buffers_pass(miTag *result, miState *state, mla_Buffers_
 		strcpy(render_dir_cur_pass, render_dir);
 
 			if(out_format != 2) {
-				get_render_file_func(state, render_dir_cur_pass, name, "-gpuAO_", frame_padding, get_ext(out_format));
+				get_render_file_func(state, render_dir_cur_pass, name, "gpuAO", frame_padding, get_ext(out_format));
 			} else {
-				get_render_file_func(state, render_dir_cur_pass, name, "-single_", frame_padding, get_ext(out_format));
+				get_render_file_func(state, render_dir_cur_pass, name, "single", frame_padding, get_ext(out_format));
 				}
 			if (out_format == 2 || out_format == 3) {
 				fbc->set("gpuAO", "compression", exr_comp);	
@@ -966,98 +984,122 @@ DLLEXPORT miBoolean mla_Buffers_pass(miTag *result, miState *state, mla_Buffers_
 	
 	if(*mi_eval_boolean(&paras->UserPass1_pass))									//UserPass1 pass
 	{
+		miTag UserPass1_Name = *mi_eval_tag(&paras->UserPass1_str);
+		if (!UserPass1_Name)
+			return miFALSE;
+		char *Pass1_Name = (char*)mi_db_access(UserPass1_Name);
+		mi_db_unpin(UserPass1_Name);
+		
 		char render_dir_cur_pass[MAX_PATH_L];
 		strcpy(render_dir_cur_pass, render_dir);
 
 			if(out_format != 2) {
-				get_render_file_func(state, render_dir_cur_pass, name, "-UserPass1_", frame_padding, get_ext(out_format));
+				get_render_file_func(state, render_dir_cur_pass, name, Pass1_Name, frame_padding, get_ext(out_format));
 			} else {
-				get_render_file_func(state, render_dir_cur_pass, name, "-single_", frame_padding, get_ext(out_format));
+				get_render_file_func(state, render_dir_cur_pass, name, "single", frame_padding, get_ext(out_format));
 				}
 			if (out_format == 2 || out_format == 3) {
-				fbc->set("UserPass1", "compression", exr_comp);	
+				fbc->set(Pass1_Name, "compression", exr_comp);	
 			}	
-		fbc->set("UserPass1", "filename", render_dir_cur_pass);
-		fbc->set("UserPass1", "filetype", get_ext(out_format));
-		fbc->set("UserPass1", "datatype", get_type(out_format));
-		fbc->set("UserPass1", "user", true);
-		fbc->set("UserPass1", "useopacity", true);
+		fbc->set(Pass1_Name, "filename", render_dir_cur_pass);
+		fbc->set(Pass1_Name, "filetype", get_ext(out_format));
+		fbc->set(Pass1_Name, "datatype", get_type(out_format));
+		fbc->set(Pass1_Name, "user", true);
+		fbc->set(Pass1_Name, "useopacity", true);
 		if(filtering == miTRUE)
-			fbc->set("UserPass1", "filtering", true);
+			fbc->set(Pass1_Name, "filtering", true);
 		else
-			fbc->set("UserPass1", "filtering", false);
+			fbc->set(Pass1_Name, "filtering", false);
 	}
 	
 	if(*mi_eval_boolean(&paras->UserPass2_pass))									//UserPass2 pass
 	{
+		miTag UserPass2_Name = *mi_eval_tag(&paras->UserPass2_str);
+		if (!UserPass2_Name)
+			return miFALSE;
+		char *Pass2_Name = (char*)mi_db_access(UserPass2_Name);
+		mi_db_unpin(UserPass2_Name);
+		
 		char render_dir_cur_pass[MAX_PATH_L];
 		strcpy(render_dir_cur_pass, render_dir);
 
 			if(out_format != 2) {
-				get_render_file_func(state, render_dir_cur_pass, name, "-UserPass2_", frame_padding, get_ext(out_format));
+				get_render_file_func(state, render_dir_cur_pass, name, Pass2_Name, frame_padding, get_ext(out_format));
 			} else {
-				get_render_file_func(state, render_dir_cur_pass, name, "-single_", frame_padding, get_ext(out_format));
+				get_render_file_func(state, render_dir_cur_pass, name, "single", frame_padding, get_ext(out_format));
 				}
 			if (out_format == 2 || out_format == 3) {
-				fbc->set("UserPass2", "compression", exr_comp);	
+				fbc->set(Pass2_Name, "compression", exr_comp);	
 			}		
-		fbc->set("UserPass2", "filename", render_dir_cur_pass);
-		fbc->set("UserPass2", "filetype", get_ext(out_format));
-		fbc->set("UserPass2", "datatype", get_type(out_format));
-		fbc->set("UserPass2", "user", true);
-		fbc->set("UserPass2", "useopacity", true);
+		fbc->set(Pass2_Name, "filename", render_dir_cur_pass);
+		fbc->set(Pass2_Name, "filetype", get_ext(out_format));
+		fbc->set(Pass2_Name, "datatype", get_type(out_format));
+		fbc->set(Pass2_Name, "user", true);
+		fbc->set(Pass2_Name, "useopacity", true);
 		if(filtering == miTRUE)
-			fbc->set("UserPass2", "filtering", true);
+			fbc->set(Pass2_Name, "filtering", true);
 		else
-			fbc->set("UserPass2", "filtering", false);
+			fbc->set(Pass2_Name, "filtering", false);
 	}
 	
 	if(*mi_eval_boolean(&paras->UserPass3_pass))									//UserPass3 pass
 	{
+		miTag UserPass3_Name = *mi_eval_tag(&paras->UserPass3_str);
+		if (!UserPass3_Name)
+			return miFALSE;
+		char *Pass3_Name = (char*)mi_db_access(UserPass3_Name);
+		mi_db_unpin(UserPass3_Name);
+		
 		char render_dir_cur_pass[MAX_PATH_L];
 		strcpy(render_dir_cur_pass, render_dir);
 
 			if(out_format != 2) {
-				get_render_file_func(state, render_dir_cur_pass, name, "-UserPass3_", frame_padding, get_ext(out_format));
+				get_render_file_func(state, render_dir_cur_pass, name, Pass3_Name, frame_padding, get_ext(out_format));
 			} else {
-				get_render_file_func(state, render_dir_cur_pass, name, "-single_", frame_padding, get_ext(out_format));
+				get_render_file_func(state, render_dir_cur_pass, name, "single", frame_padding, get_ext(out_format));
 				}
 			if (out_format == 2 || out_format == 3) {
-				fbc->set("UserPass3", "compression", exr_comp);	
+				fbc->set(Pass3_Name, "compression", exr_comp);	
 			}		
-		fbc->set("UserPass3", "filename", render_dir_cur_pass);
-		fbc->set("UserPass3", "filetype", get_ext(out_format));
-		fbc->set("UserPass3", "datatype", get_type(out_format));
-		fbc->set("UserPass3", "user", true);
-		fbc->set("UserPass3", "useopacity", true);
+		fbc->set(Pass3_Name, "filename", render_dir_cur_pass);
+		fbc->set(Pass3_Name, "filetype", get_ext(out_format));
+		fbc->set(Pass3_Name, "datatype", get_type(out_format));
+		fbc->set(Pass3_Name, "user", true);
+		fbc->set(Pass3_Name, "useopacity", true);
 		if(filtering == miTRUE)
-			fbc->set("UserPass3", "filtering", true);
+			fbc->set(Pass3_Name, "filtering", true);
 		else
-			fbc->set("UserPass3", "filtering", false);
+			fbc->set(Pass3_Name, "filtering", false);
 	}
 	
 	if(*mi_eval_boolean(&paras->UserPass4_pass))									//UserPass4 pass
 	{
+		miTag UserPass4_Name = *mi_eval_tag(&paras->UserPass4_str);
+		if (!UserPass4_Name)
+			return miFALSE;
+		char *Pass4_Name = (char*)mi_db_access(UserPass4_Name);
+		mi_db_unpin(UserPass4_Name);
+		
 		char render_dir_cur_pass[MAX_PATH_L];
 		strcpy(render_dir_cur_pass, render_dir);
 
 			if(out_format != 2) {
-				get_render_file_func(state, render_dir_cur_pass, name, "-UserPass4_", frame_padding, get_ext(out_format));
+				get_render_file_func(state, render_dir_cur_pass, name, Pass4_Name, frame_padding, get_ext(out_format));
 			} else {
-				get_render_file_func(state, render_dir_cur_pass, name, "-single_", frame_padding, get_ext(out_format));
+				get_render_file_func(state, render_dir_cur_pass, name, "single", frame_padding, get_ext(out_format));
 				}
 			if (out_format == 2 || out_format == 3) {
-				fbc->set("UserPass4", "compression", exr_comp);	
+				fbc->set(Pass4_Name, "compression", exr_comp);	
 			}		
-		fbc->set("UserPass4", "filename", render_dir_cur_pass);
-		fbc->set("UserPass4", "filetype", get_ext(out_format));
-		fbc->set("UserPass4", "datatype", get_type(out_format));
-		fbc->set("UserPass4", "user", true);
-		fbc->set("UserPass4", "useopacity", true);
+		fbc->set(Pass4_Name, "filename", render_dir_cur_pass);
+		fbc->set(Pass4_Name, "filetype", get_ext(out_format));
+		fbc->set(Pass4_Name, "datatype", get_type(out_format));
+		fbc->set(Pass4_Name, "user", true);
+		fbc->set(Pass4_Name, "useopacity", true);
 		if(filtering == miTRUE)
-			fbc->set("UserPass4", "filtering", true);
+			fbc->set(Pass4_Name, "filtering", true);
 		else
-			fbc->set("UserPass4", "filtering", false);
+			fbc->set(Pass4_Name, "filtering", false);
 	}
 	
 	//stereo camera

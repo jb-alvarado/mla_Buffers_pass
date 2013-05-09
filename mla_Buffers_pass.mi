@@ -36,6 +36,8 @@ declare shader
 		scalar		"aoMinDistance",
 		scalar		"aoMaxDistance",
 		
+		boolean 	"milaClamp",
+		
 		boolean		"overrideFbMemManagement",
 		integer		"fbMemManagement", 		#: shortname "mo" default 1 min 0 max 2 enum "Disable=0:Mapped=1:Cached=2"
 		
@@ -64,9 +66,13 @@ declare shader
 		boolean 	"emission_pass",
 		boolean 	"gpuAO_pass",	
 		boolean 	"UserPass1_pass",
+		string 		"UserPass1_str",
 		boolean 	"UserPass2_pass",
+		string 		"UserPass2_str",
 		boolean 	"UserPass3_pass",
+		string 		"UserPass3_str",
 		boolean 	"UserPass4_pass",
+		string 		"UserPass4_str",
 		boolean 	"modifyCamera", 				#: shortname modifyCamera
 		integer 	"stereoMode", 					#: shortname stereoMode enum "off:toein:offaxis:offset"
 		scalar 		"eyeDist"						#: default 6.5 shortname eyeDist
@@ -82,7 +88,7 @@ gui "gui_mla_Buffers_pass" {
 		)
 	control "useBuffers" "boolean" ( 
 		"nonConnectable", 
-		"uiName" "use Buffers",
+		"uiName" "Use Buffers",
 		"value" 1
 		)	
     control "fname" "string" ( 
@@ -138,6 +144,11 @@ gui "gui_mla_Buffers_pass" {
 	control "aoMaxDistance" "scalar" ( 
 		"uiName" "Ambient Occlusion Max Distance",
 		"value" -1.0
+		)	
+	control "milaClamp" "boolean" ( 
+		"nonConnectable", 
+		"uiName" "mila Clamp Output",
+		"value" 1
 		)	
 	control "overrideFbMemManagement" "boolean" ( 
 		"nonConnectable", 
@@ -282,22 +293,38 @@ gui "gui_mla_Buffers_pass" {
 		"nonConnectable", 
 		"uiName" "User Pass 1",
 		"value" 0
-		)	
+		)
+    control "UserPass1_str" "string" ( 
+		"uiName" "User Pass1 Name", 
+		"value" UserPass1
+		)		
 	control "UserPass2_pass" "boolean" ( 
 		"nonConnectable", 
 		"uiName" "User Pass 2",
 		"value" 0
 		)	
+	control "UserPass2_str" "string" ( 
+		"uiName" "User Pass2 Name", 
+		"value" UserPass2
+		)		
 	control "UserPass3_pass" "boolean" ( 
 		"nonConnectable", 
 		"uiName" "User Pass 3",
 		"value" 0
-		)		
+		)
+	control "UserPass3_str" "string" ( 
+		"uiName" "User Pass3 Name", 
+		"value" UserPass3
+		)	
 	control "UserPass4_pass" "boolean" ( 
 		"nonConnectable", 
 		"uiName" "User Pass 4",
 		"value" 0
 		)	
+	control "UserPass4_str" "string" ( 
+		"uiName" "User Pass4 Name", 
+		"value" UserPass4
+		)		
 	control "modifyCamera" "boolean" ( 
 		"nonConnectable", 
 		"uiName" "Modify Camera",
@@ -324,12 +351,16 @@ declare phenomenon
         scalar "visibility",
         integer "show_framebuffer",
 		color  "User_Pass1",
+		string "UserPass1_str",
 		boolean "color_comp1",
 		color  "User_Pass2",
+		string "UserPass2_str",
 		boolean "color_comp2",
 		color  "User_Pass3",
+		string "UserPass3_str",
 		boolean "color_comp3",
 		color  "User_Pass4",
+		string "UserPass4_str",
 		boolean "color_comp4"
     )
     shader "root" "mila_material" (
@@ -339,22 +370,22 @@ declare phenomenon
 		"extra_color" [
 		{
 		"color" 		= interface "User_Pass1",
-		"color_fb"		 "UserPass1",
+		"color_fb"		= interface "UserPass1_str",
 		"color_comp"	= interface"color_comp1"
 		},
 		{
 		"color" 		= interface "User_Pass2",
-		"color_fb"		 "UserPass2",
+		"color_fb"		= interface "UserPass2_str",
 		"color_comp"	= interface"color_comp2"
 		},
 		{
 		"color" 		= interface "User_Pass3",
-		"color_fb"		 "UserPass3",
+		"color_fb"		= interface "UserPass3_str",
 		"color_comp"	= interface"color_comp3"
 		},
 		{
 		"color" 		= interface "User_Pass4",
-		"color_fb"		 "UserPass4",
+		"color_fb"		= interface "UserPass4_str",
 		"color_comp"	= interface"color_comp4"
 		}
 		]
@@ -392,7 +423,11 @@ gui "gui_mla_material_phen" {
     )
 	control "User_Pass1" "color" (
         "uiName" "User Pass 1",   
-        "value" 0 0 0
+        "value" 1 0 0
+    )
+	control "UserPass1_str" "color" (
+        "uiName" "Pass 1 Name",   
+        "value" UserPass1
     )
 	control "color_comp1" "boolean" (
         "uiName" "color comp 1",   
@@ -401,7 +436,11 @@ gui "gui_mla_material_phen" {
     )
 	control "User_Pass2" "color" (
         "uiName" "User Pass 2",   
-        "value" 0 0 0
+        "value" 0 1 0
+    )
+	control "UserPass2_str" "color" (
+        "uiName" "Pass 2 Name",   
+        "value" UserPass2
     )
 	control "color_comp2" "boolean" (
         "uiName" "color comp 2",   
@@ -410,7 +449,11 @@ gui "gui_mla_material_phen" {
     )
 	control "User_Pass3" "color" (
         "uiName" "User Pass 3",   
-        "value" 0 0 0
+        "value" 0 0 1
+    )
+	control "UserPass3_str" "color" (
+        "uiName" "Pass 3 Name",   
+        "value" UserPass3
     )
 	control "color_comp3" "boolean" (
         "uiName" "color comp 3",   
@@ -419,7 +462,11 @@ gui "gui_mla_material_phen" {
     )
 	control "User_Pass4" "color" (
         "uiName" "User Pass 4",   
-        "value" 0 0 0
+        "value" 1 1 1
+    )
+	control "UserPass4_str" "color" (
+        "uiName" "Pass 4 Name",   
+        "value" UserPass4
     )
 	control "color_comp4" "boolean" (
         "uiName" "color comp 4",   
