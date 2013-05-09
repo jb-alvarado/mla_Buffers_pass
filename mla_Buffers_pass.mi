@@ -1,0 +1,431 @@
+#****************************************************************************
+# Based on p_shaders from Pavel Ledin (aka Puppet) puppet@rambler.ru
+# Author:	BATAILLE Damien mila@mila.info
+# Modify:   jb_alvarado :: www.pixelcrusher.de
+# Created:	09.05.10 / 28.04.2013
+# Module:	mla_Buffers_pass
+# Purpose:	.mi declarations for mla_Buffers_pass
+# Version:	1.10
+#****************************************************************************
+
+min version "3.11.1"
+max version "3.12.99"
+
+$ifndef "mla_Buffers_pass_mi_included"
+set "mla_Buffers_pass_mi_included" "true"
+
+declare shader
+	geometry 										
+		"mla_Buffers_pass" (
+		
+		boolean 	"useBuffers",
+		string 		"fname",				#: shortname "nam"
+		string 		"render_dir",			#: shortname "rdir"
+		integer 	"frame_padding",		#: shortname "frpa" softmin 1 softmax 4 default 4 min 1 max 10
+		integer		"output_format",		#: shortname "oufo" min 0 max 3
+		
+		integer 	"openexr_comp",			#: shortname "exrc" min 0 max 7
+	
+		boolean 	"filter_pass",			#: shortname "fipa" default 1
+		boolean 	"contrast_all_buffers",	#: shortname "cofb" default 0
+	
+		boolean 	"gpuAO",
+#		integer 	"aoGpuPasses",
+#		integer 	"aoRays",
+		scalar		"aoFalloff",
+		scalar		"aoMinDistance",
+		scalar		"aoMaxDistance",
+		
+		boolean		"overrideFbMemManagement",
+		integer		"fbMemManagement", 		#: shortname "mo" default 1 min 0 max 2 enum "Disable=0:Mapped=1:Cached=2"
+		
+		boolean 	"mr_color_pass",
+		integer 	"mr_color_format",
+		boolean 	"mr_z_pass",		#: shortname "zp" default 0
+		integer 	"mr_z_format",		#: shortname "zf" default 0 min 0 max 4
+		boolean 	"mr_normal_pass",	#: shortname "norp" default 0
+		integer 	"mr_normal_format",	#: shortname "norf" default 0 min 0 max 4
+		boolean 	"mr_motion_pass",	#: shortname "motp" default 0
+		integer 	"mr_motion_format",	#: shortname "motf" default 0 min 0 max 4
+		boolean 	"mr_label_pass",	#: shortname "labp" default 0
+		integer		"mr_label_format",	#: shortname "labf" default 0 min 0 max 4
+		
+		boolean 	"direct_diffuse_pass",
+		boolean 	"indirect_diffuse_pass",
+		boolean 	"direct_glossy_pass",
+		boolean 	"indirect_glossy_pass",
+		boolean 	"direct_specular_pass",
+		boolean 	"indirect_specular_pass",
+		boolean 	"diffuse_transmission_pass",
+		boolean 	"glossy_transmission_pass",
+		boolean 	"specular_transmission_pass",
+		boolean 	"front_scatter_pass",
+		boolean 	"back_scatter_pass",
+		boolean 	"emission_pass",
+		boolean 	"gpuAO_pass",	
+		boolean 	"UserPass1_pass",
+		boolean 	"UserPass2_pass",
+		boolean 	"UserPass3_pass",
+		boolean 	"UserPass4_pass",
+		boolean 	"modifyCamera", 				#: shortname modifyCamera
+		integer 	"stereoMode", 					#: shortname stereoMode enum "off:toein:offaxis:offset"
+		scalar 		"eyeDist"						#: default 6.5 shortname eyeDist
+	)
+	version 1
+	apply geometry
+end declare
+  
+gui "gui_mla_Buffers_pass" {
+     control "Global" "Global" (
+         "uiName"   "MLA: Buffers Passes",
+         "category" "Geometry"
+		)
+	control "useBuffers" "boolean" ( 
+		"nonConnectable", 
+		"uiName" "use Buffers",
+		"value" 1
+		)	
+    control "fname" "string" ( 
+		"uiName" "File Name", 
+		"value" main
+		)
+    control "render_dir" "string" ( 
+		"uiName" "Path to Save Folder"
+		)
+	control "frame_padding" "integer" ( 
+		"nonConnectable", 
+		"uiName" "Frame Padding",
+		"value"	4,
+		"range" 1 8
+		)
+	control "output_format" "integer" ( 
+		"nonConnectable", 
+        "enum",
+		"uiName" "Output Format", 
+		"value"  "0 tif, 1 iff, 2 exr Single File, 3 exr, 4 png",
+        "range"  0 4
+		)
+	control "openexr_comp" "integer" ( 
+		"nonConnectable",
+        "enum",
+		"uiName" "OpenEXR Compression",
+		"value"  "0 rle, 1 zip, 2 piz, 3 pxr24, 4 none",
+        "range"  0 4
+		)
+	control "filter_pass" "boolean" ( 
+		"nonConnectable", 
+		"uiName" "Filter Passes",
+		"value" 1
+		)
+	control "contrast_all_buffers" "boolean" ( 
+		"nonConnectable", 
+		"uiName" "Contrast all Buffers",
+		"value" 1
+		)	
+	control "gpuAO" "boolean" ( 
+		"nonConnectable", 
+		"uiName" "GPU Ambient Occlusion Pass",
+		"value" 0
+		)
+	control "aoFalloff" "scalar" ( 
+		"uiName" "Ambient Occlusion Falloff",
+		"value" 1.0
+		)
+	control "aoMinDistance" "scalar" ( 
+		"uiName" "Ambient Occlusion Min Distance",
+		"value" 0.0
+		)	
+	control "aoMaxDistance" "scalar" ( 
+		"uiName" "Ambient Occlusion Max Distance",
+		"value" -1.0
+		)	
+	control "overrideFbMemManagement" "boolean" ( 
+		"nonConnectable", 
+		"uiName" "Override Framebuffer Mem Management",
+		"value" 1
+		)		
+	control "fbMemManagement" "integer" ( 
+		"nonConnectable", 
+        "enum",
+		"uiName" "Framebuffer Mem Management", 
+		"value"  "0 Disable, 1 Mapped, 2 Cached",
+        "range"  0 2
+		)	
+	control "mr_color_pass" "boolean" ( 
+		"nonConnectable", 
+		"uiName" "mr Color Pass",
+		"value" 0
+		)
+	control "mr_color_format" "integer" ( 
+		"nonConnectable", 
+        "enum",
+		"uiName" "mr Color Format", 
+		"value"  "0 tif, 1 iff, 2 exr single file, 3 exr, 4 png",
+        "range"  0 4
+		)	
+	control "mr_z_pass" "boolean" ( 
+		"nonConnectable", 
+		"uiName" "mr ZDepth Pass",
+		"value" 0
+		)		
+	control "mr_z_format" "integer" ( 
+		"nonConnectable", 
+        "enum",
+		"uiName" "mr ZDepth Format", 
+		"value"  "0 zt, 1 tif, 2 exr single file, 3 exr",
+        "range"  0 3
+		)	
+	control "mr_normal_pass" "boolean" ( 
+		"nonConnectable", 
+		"uiName" "mr Normal Pass",
+		"value" 0
+		)		
+	control "mr_normal_format" "integer" ( 
+		"nonConnectable", 
+        "enum",
+		"uiName" "mr Normal Format", 
+		"value"  "0 nt, 1 tif, 2 exr single file, 3 exr",
+        "range"  0 3
+		)		
+	control "mr_motion_pass" "boolean" ( 
+		"nonConnectable", 
+		"uiName" "mr Motion Pass",
+		"value" 0
+		)		
+	control "mr_motion_format" "integer" ( 
+		"nonConnectable", 
+        "enum",
+		"uiName" "mr Motion Format", 
+		"value"  "0 mt, 1 tif, 2 exr single file, 3 exr",
+        "range"  0 3
+		)		
+	control "mr_label_pass" "boolean" ( 
+		"nonConnectable", 
+		"uiName" "mr Label Pass",
+		"value" 0,
+		"hidden"
+		)		
+	control "mr_label_format" "integer" ( 
+		"nonConnectable", 
+        "enum",
+		"uiName" "mr Label Format", 
+		"value"  "0 tt, 1 tif, 2 exr single file, 3 exr",
+        "range"  0 3,
+		"hidden"
+		)	
+	control "direct_diffuse_pass" "boolean" ( 
+		"nonConnectable", 
+		"uiName" "Direct Diffuse",
+		"value" 0
+		)		
+	control "indirect_diffuse_pass" "boolean" ( 
+		"nonConnectable", 
+		"uiName" "Indirect Diffuse",
+		"value" 0
+		)
+	control "direct_glossy_pass" "boolean" ( 
+		"nonConnectable", 
+		"uiName" "Direct Glossy",
+		"value" 0
+		)		
+	control "indirect_glossy_pass" "boolean" ( 
+		"nonConnectable", 
+		"uiName" "Indirect Glossy",
+		"value" 0
+		)
+	control "direct_specular_pass" "boolean" ( 
+		"nonConnectable", 
+		"uiName" "Direct Specular",
+		"value" 0
+		)		
+	control "indirect_specular_pass" "boolean" ( 
+		"nonConnectable", 
+		"uiName" "Indirect Specular",
+		"value" 0
+		)
+	control "diffuse_transmission_pass" "boolean" ( 
+		"nonConnectable", 
+		"uiName" "Diffuse Transmission",
+		"value" 0
+		)		
+	control "glossy_transmission_pass" "boolean" ( 
+		"nonConnectable", 
+		"uiName" "Glossy Transmission",
+		"value" 0
+		)
+		control "specular_transmission_pass" "boolean" ( 
+		"nonConnectable", 
+		"uiName" "Specular Transmission",
+		"value" 0
+		)
+	control "front_scatter_pass" "boolean" ( 
+		"nonConnectable", 
+		"uiName" "Front Scatter",
+		"value" 0
+		)		
+	control "back_scatter_pass" "boolean" ( 
+		"nonConnectable", 
+		"uiName" "Back Scatter",
+		"value" 0
+		)
+	control "emission_pass" "boolean" ( 
+		"nonConnectable", 
+		"uiName" "Emission",
+		"value" 0
+		)		
+	control "gpuAO_pass" "boolean" ( 
+		"nonConnectable", 
+		"uiName" "GPU Ambient Occlusion",
+		"value" 0
+		)	
+	control "UserPass1_pass" "boolean" ( 
+		"nonConnectable", 
+		"uiName" "User Pass 1",
+		"value" 0
+		)	
+	control "UserPass2_pass" "boolean" ( 
+		"nonConnectable", 
+		"uiName" "User Pass 2",
+		"value" 0
+		)	
+	control "UserPass3_pass" "boolean" ( 
+		"nonConnectable", 
+		"uiName" "User Pass 3",
+		"value" 0
+		)		
+	control "UserPass4_pass" "boolean" ( 
+		"nonConnectable", 
+		"uiName" "User Pass 4",
+		"value" 0
+		)	
+	control "modifyCamera" "boolean" ( 
+		"nonConnectable", 
+		"uiName" "Modify Camera",
+		"value" 0
+		)
+	control "stereoMode" "integer" ( 
+		"nonConnectable", 
+        "enum",
+		"uiName" "Stereo Mode", 
+		"value"  "0 off, 1 toein, 2 offaxis, 3 offset",
+        "range"  0 3
+		)
+	control "eyeDist" "scalar" ( 
+		"nonConnectable", 
+		"uiName" "Eye Distance",
+		"value" 6.5
+		)	
+}
+
+
+declare phenomenon
+    material "mla_material_phen" (
+        shader "shader",
+        scalar "visibility",
+        integer "show_framebuffer",
+		color  "User_Pass1",
+		boolean "color_comp1",
+		color  "User_Pass2",
+		boolean "color_comp2",
+		color  "User_Pass3",
+		boolean "color_comp3",
+		color  "User_Pass4",
+		boolean "color_comp4"
+    )
+    shader "root" "mila_material" (
+        "shader"           = interface "shader",
+        "visibility"	   = interface "visibility",
+        "show_framebuffer" = interface "show_framebuffer",
+		"extra_color" [
+		{
+		"color" 		= interface "User_Pass1",
+		"color_fb"		 "UserPass1",
+		"color_comp"	= interface"color_comp1"
+		},
+		{
+		"color" 		= interface "User_Pass2",
+		"color_fb"		 "UserPass2",
+		"color_comp"	= interface"color_comp2"
+		},
+		{
+		"color" 		= interface "User_Pass3",
+		"color_fb"		 "UserPass3",
+		"color_comp"	= interface"color_comp3"
+		},
+		{
+		"color" 		= interface "User_Pass4",
+		"color_fb"		 "UserPass4",
+		"color_comp"	= interface"color_comp4"
+		}
+		]
+    )
+    material "material"
+        = "root"
+        shadow = "root"
+        photon = "root"
+    end material
+
+    root material "material"
+end declare	
+
+gui "gui_mla_material_phen" {
+    control "Global" "Global" ( "uiName"   "MLA: Material", 
+        "category" "Material",
+            "viewport_diffuse" "shader.color",
+            "viewport_specular" "shader.specular",
+            "viewport_shininess" "shader.reflection" 		
+    )
+    control "shader" "shader" ( 
+        "uiName" "Layer/Mix",
+        "value"  "mila_layer_5"
+    )
+    control "visibility" "scalar" (
+        "uiName" "Visibility (Cutout)", 
+        "value" 1.0
+    )
+    control "show_framebuffer" "integer" (
+        "nonConnectable", 
+        "enum",
+        "uiName" "Show Framebuffer",
+        "value"  "0 Main, 1 Transparency, 2 Absorb, 3 Direct Diffuse, 4 Direct Glossy,5 Direct Specular, 6 Indirect Diffuse, 7 Indirect Glossy, 8 Indirect Specular, 9 Diffuse Transmission, 10 Glossy Transmission, 11 Specular Transmission, 12 Front Scatter, 13 Back Scatter, 14 Emission",
+        "range"  0 14
+    )
+	control "User_Pass1" "color" (
+        "uiName" "User Pass 1",   
+        "value" 0 0 0
+    )
+	control "color_comp1" "boolean" (
+        "uiName" "color comp 1",   
+        "value" 0,
+		"hidden"
+    )
+	control "User_Pass2" "color" (
+        "uiName" "User Pass 2",   
+        "value" 0 0 0
+    )
+	control "color_comp2" "boolean" (
+        "uiName" "color comp 2",   
+        "value" 0,
+		"hidden"
+    )
+	control "User_Pass3" "color" (
+        "uiName" "User Pass 3",   
+        "value" 0 0 0
+    )
+	control "color_comp3" "boolean" (
+        "uiName" "color comp 3",   
+        "value" 0,
+		"hidden"
+    )
+	control "User_Pass4" "color" (
+        "uiName" "User Pass 4",   
+        "value" 0 0 0
+    )
+	control "color_comp4" "boolean" (
+        "uiName" "color comp 4",   
+        "value" 0,
+		"hidden"
+    )
+}
+  
+$endif # if not "mla_Buffers_pass_mi_included"

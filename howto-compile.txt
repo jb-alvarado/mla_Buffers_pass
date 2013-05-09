@@ -1,0 +1,10 @@
+Compile:
+
+When you have the sdk and the visual studio express from microsoft installed open, for 64 bit compiling, the Visual Studio 20XX x64 Cross Tools Command Prompt and navigate to the folder.
+
+Then type: nmake 64
+After that: nmake clean
+
+Now you have the new .dll in the bin64 folder.
+
+Have fun and feel free to modify under the conditions from the license file.

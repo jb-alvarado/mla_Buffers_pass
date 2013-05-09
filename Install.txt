@@ -1,0 +1,10 @@
+You need mental ray version 3.11.x that is in the Autodesk product line 2014
+
+for 3ds Max you need the mr Geometry Shader Object plugin:
+http://www.maxplugins.de/r2013_files/maxplugins/mrGeomShaderObject_Max2013.zip
+
+for 3ds Max copy the mi file to:
+*\Autodesk\3ds Max 2014\NVIDIA\shaders_autoload\mentalray\include
+
+and the shader (.dll) to:
+*\Autodesk\3ds Max 2014\NVIDIA\shaders_autoload\mentalray\shaders
