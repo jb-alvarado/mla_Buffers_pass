@@ -9,6 +9,9 @@ The shader have also a GPU AO option, so you can write out a ambient occlusion p
 More information about the mila layer shaders:
 
 http://forum.nvidia-arc.com/showthread.php?12260-Layering-library
+
 http://elementalray.wordpress.com/2013/05/06/mila-new-features-may/
+
 http://elementalray.wordpress.com/?s=mila
+
 http://elementalray.wordpress.com/2013/01/23/using-framebuffers-with-mila/
