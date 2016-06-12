@@ -498,7 +498,7 @@ struct Interface {
     /// \param state current rendering state
     /// \param idx framebuffer index to return value from
     /// \returns a pointer to the current sample value of the current
-    /// sample possition of the framebuffer at index idx
+    /// sample position of the framebuffer at index idx
     virtual const void* renderpass_get_cur_sample(
 		miState *	state,
 		const size_t	idx);
@@ -507,7 +507,7 @@ struct Interface {
     /// \param state current rendering state
     /// \param idx framebuffer index to return value from
     /// \returns a pointer to the sample value of the current pass
-    /// of the current sample possition of the framebuffer at index idx
+    /// of the current sample position of the framebuffer at index idx
     virtual const void* renderpass_get_pass_sample(
 		miState *	state,
 		const size_t	idx);

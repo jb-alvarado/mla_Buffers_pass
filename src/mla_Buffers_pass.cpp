@@ -261,7 +261,7 @@ miTag declare_output_shaders(void)
 	miTag new_func_tag;
 	//declare function
 	miTag check_tag = mi_api_name_lookup(mi_mem_strdup("p_math_output"));
-	if(check_tag == miNULLTAG)	//fucntion not declared yet, declare it
+	if(check_tag == miNULLTAG)	//function not declared yet, declare it
 	{
 		miParameter *inputParamet;
 		inputParamet = mi_api_parameter_decl(miTYPE_STRING, mi_mem_strdup("buffer_a"), 0);
