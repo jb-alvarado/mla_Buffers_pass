@@ -218,7 +218,7 @@ typedef enum miModule {
 	miM_IRAY,		/* IRAY renderer */
 	miM_CUDA,		/* CUDA */
 	miM_ENVLIGHT,		/* environment lighting / IBL */
-        miM_RCGPU,              /* gpu render accelleration */
+        miM_RCGPU,              /* gpu render acceleration */
         miNMODULES		/* # of modules (not a module itself) */
 } miModule;
 #ifndef M_PI
